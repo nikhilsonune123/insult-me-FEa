@@ -1,11 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import "./App.css";
 
+type Message = {
+  role: "user" | "ai";
+  text: string;
+};
+
 function App() {
-  const [message, setMessage] = useState("");
-  const [chat, setChat] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const bottomRef = useRef(null);
+  const [message, setMessage] = useState<string>("");
+  const [chat, setChat] = useState<Message[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const sendMessage = async () => {
     if (!message.trim()) return;
@@ -16,20 +21,27 @@ function App() {
     setChat((prev) => [...prev, { role: "user", text: userMsg }]);
     setLoading(true);
 
-    const res = await fetch("https://insult-me-bea.onrender.com/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ message: userMsg })
-    });
+    try {
+      const res = await fetch("https://insult-me-bea.onrender.com/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: userMsg })
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    setChat((prev) => [
-      ...prev,
-      { role: "ai", text: data.response }
-    ]);
+      setChat((prev) => [
+        ...prev,
+        { role: "ai", text: data.response }
+      ]);
+    } catch (err) {
+      setChat((prev) => [
+        ...prev,
+        { role: "ai", text: "Error: Unable to fetch response" }
+      ]);
+    }
 
     setLoading(false);
   };
